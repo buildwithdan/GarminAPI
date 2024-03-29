@@ -1,0 +1,1 @@
+Want to user Vercel functions = to deal with cron jobs = https://cron-template.vercel.app/
