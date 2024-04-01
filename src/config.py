@@ -1,6 +1,10 @@
 # Configuration settings and environment variables
-
+# from dotenv import load_dotenv
 import os
+
+# # Load the .env file
+# dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+# load_dotenv(dotenv_path)
 
 garmin_email = os.getenv('GARMIN_EMAIL')
 garmin_password = os.getenv('GARMIN_PASSWORD')

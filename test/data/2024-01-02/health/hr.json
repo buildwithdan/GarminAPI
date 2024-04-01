@@ -1,0 +1,14 @@
+{
+  "userProfilePK": 109452017,
+  "calendarDate": "2024-01-02",
+  "startTimestampGMT": "2024-01-02T00:00:00.0",
+  "endTimestampGMT": "2024-01-03T00:00:00.0",
+  "startTimestampLocal": "2024-01-02T00:00:00.0",
+  "endTimestampLocal": "2024-01-03T00:00:00.0",
+  "maxHeartRate": null,
+  "minHeartRate": null,
+  "restingHeartRate": null,
+  "lastSevenDaysAvgRestingHeartRate": null,
+  "heartRateValueDescriptors": null,
+  "heartRateValues": null
+}

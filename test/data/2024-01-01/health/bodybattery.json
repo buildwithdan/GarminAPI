@@ -1,0 +1,47 @@
+[
+  {
+    "date": "2024-01-01",
+    "charged": null,
+    "drained": null,
+    "startTimestampGMT": "2024-01-01T00:00:00.0",
+    "endTimestampGMT": "2024-01-02T00:00:00.0",
+    "startTimestampLocal": "2024-01-01T00:00:00.0",
+    "endTimestampLocal": "2024-01-02T00:00:00.0",
+    "bodyBatteryValuesArray": [
+      [
+        1704095820000,
+        null
+      ],
+      [
+        1704095820000,
+        null
+      ],
+      [
+        1704124620000,
+        null
+      ],
+      [
+        1704124620000,
+        null
+      ],
+      [
+        1704153420000,
+        null
+      ],
+      [
+        1704153420000,
+        null
+      ]
+    ],
+    "bodyBatteryValueDescriptorDTOList": [
+      {
+        "bodyBatteryValueDescriptorIndex": 0,
+        "bodyBatteryValueDescriptorKey": "timestamp"
+      },
+      {
+        "bodyBatteryValueDescriptorIndex": 1,
+        "bodyBatteryValueDescriptorKey": "bodyBatteryLevel"
+      }
+    ]
+  }
+]
