@@ -1,110 +1,122 @@
 # SQLAlchemy database models
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Date, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Date, JSON, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 # Import your configuration settings
 from config import db_host, db_username, db_password, db_name, db_port, db_schema
 
 Base = declarative_base()
 
-class BodyBattery(Base):
-    __tablename__ = 'body_battery'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    date = Column(Date)
-    charged = Column(Integer)
-    drained = Column(Integer)
-    start_timestamp_gmt = Column(DateTime)
-    end_timestamp_gmt = Column(DateTime)
-    body_battery_values = Column(JSON)  # Storing the array directly; consider normalization
+# class BodyBattery_tbl(Base):
+#     __tablename__ = 'etl_body_battery'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     date = Column(Date)
+#     charged = Column(Integer)
+#     drained = Column(Integer)
+#     start_timestamp_gmt = Column(DateTime, primary_key=True)
+#     end_timestamp_gmt = Column(DateTime)
+#     body_battery_values = Column(JSON)  # Storing the array directly; consider normalization
 
-class FloorData(Base):
-    __tablename__ = 'floor_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_gmt = Column(DateTime)
-    end_gmt = Column(DateTime)
-    floors_ascended = Column(Integer)
-    floors_descended = Column(Integer)
+# class Floor_tbl(Base):
+#     __tablename__ = 'etl_floor'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     start_gmt = Column(DateTime, primary_key=True)
+#     end_gmt = Column(DateTime)
+#     floors_ascended = Column(Integer)
+#     floors_descended = Column(Integer)
 
-class HRData(Base):
-    __tablename__ = 'hr_data'
+class HRate_tbl(Base):
+    __tablename__ = 'etl_hrate'
     __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_timestamp_gmt = Column(DateTime)
+    start_timestamp_gmt = Column(DateTime, primary_key=True)
     end_timestamp_gmt = Column(DateTime)
     max_heart_rate = Column(Integer)
     min_heart_rate = Column(Integer)
     resting_heart_rate = Column(Integer)
     heart_rate_values = Column(JSON)  # Storing JSON directly, consider normalization
     
-class MaxMetricsData(Base):
-    __tablename__ = 'maxmetrics_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    calendar_date = Column(DateTime)
-    vo2_max_precise_value = Column(Float)
-    fitness_age = Column(Integer)
-    heat_acclimation_percentage = Column(Float)
-    # Add more fields as needed from maxmetrics.json
+# class MaxMetrics_tbl(Base):
+#     __tablename__ = 'etl_maxmetrics'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     calendar_date = Column(DateTime, primary_key=True)
+#     vo2_max_precise_value = Column(Float)
+#     fitness_age = Column(Integer)
+#     heat_acclimation_percentage = Column(Float)
+#     # Add more fields as needed from maxmetrics.json
  
-class RespirationData(Base):
-    __tablename__ = 'respiration_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_timestamp_gmt = Column(DateTime)
-    end_timestamp_gmt = Column(DateTime)
-    # Include specific fields for respiration data 
+# class Respiration_tbl(Base):
+#     __tablename__ = 'etl_respiration'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     start_timestamp_gmt = Column(DateTime, primary_key=True)
+#     end_timestamp_gmt = Column(DateTime)
+#     # Include specific fields for respiration data 
 
-class RestingHeartRate(Base):
-    __tablename__ = 'resting_heart_rate'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    user_profile_id = Column(Integer)
-    statistics_start_date = Column(Date)
-    statistics_end_date = Column(Date)
-    value = Column(Float)
-    calendar_date = Column(Date)
+# class RestingHeart_tbl(Base):
+#     __tablename__ = 'etl_resting_heart'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     user_profile_id = Column(Integer)
+#     statistics_start_date = Column(Date, primary_key=True)
+#     statistics_end_date = Column(Date)
+#     value = Column(Float)
+#     calendar_date = Column(Date)
 
-class SleepData(Base):
-    __tablename__ = 'sleep_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_gmt = Column(DateTime)
-    end_gmt = Column(DateTime)
-    sleep_level = Column(String)
-    # Add more fields as per your sleep.json structure
+# class Sleep_tbl(Base):
+#     __tablename__ = 'etl_sleep'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     start_gmt = Column(DateTime, primary_key=True)
+#     end_gmt = Column(DateTime)
+#     sleep_level = Column(String)
+#     # Add more fields as per your sleep.json structure
 
-class SpO2Data(Base):
-    __tablename__ = 'spo2_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_timestamp_gmt = Column(DateTime)
-    end_timestamp_gmt = Column(DateTime)
-    average_spo2 = Column(Float)
-    lowest_spo2 = Column(Integer)
-    spo2_hourly_averages = Column(JSON)  # Storing JSON directly, consider normalization
+# class SpO2_tbl(Base):
+#     __tablename__ = 'etl_spo2'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     start_timestamp_gmt = Column(DateTime, primary_key=True)
+#     end_timestamp_gmt = Column(DateTime)
+#     average_spo2 = Column(Float)
+#     lowest_spo2 = Column(Integer)
+#     spo2_hourly_averages = Column(JSON)  # Storing JSON directly, consider normalization
 
-class StepData(Base):
-    __tablename__ = 'step_data'
+class Step_tbl(Base):
+    __tablename__ = 'etl_steps'
     __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    start_gmt = Column(DateTime)
+    start_gmt = Column(DateTime, primary_key=True)
     end_gmt = Column(DateTime)
     steps = Column(Integer)
-    activity_level = Column(String)
+    pushes = Column(Integer)
+    primaryActivityLevel = Column(String)
+    activity_level = Column(Boolean)
 
-class StressData(Base):
-    __tablename__ = 'stress_data'
-    __table_args__ = {'schema': f"{db_schema}"}
-    id = Column(Integer, primary_key=True)
-    user_profile_pk = Column(Integer)
-    calendar_date = Column(Date)
-    start_timestamp_gmt = Column(DateTime)
-    end_timestamp_gmt = Column(DateTime)
-    max_stress_level = Column(Integer)
-    avg_stress_level = Column(Integer)
-    stress_values = Column(JSON)  # Storing the array directly; consider normalization
+# class Stress_tbl(Base):
+#     __tablename__ = 'etl_stress'
+#     __table_args__ = {'schema': f"{db_schema}"}
+#     user_profile_pk = Column(Integer)
+#     calendar_date = Column(Date)
+#     start_timestamp_gmt = Column(DateTime, primary_key=True)
+#     end_timestamp_gmt = Column(DateTime)
+#     max_stress_level = Column(Integer)
+#     avg_stress_level = Column(Integer)
+#     stress_values = Column(JSON)  # Storing the array directly; consider normalization
+
+
+# class personal_records_tbl(Base):
+#     __tablename__ = 'etl_personal_records'
+#     id = Column(Integer, primary_key=True)
+#     typeId = Column(Integer)
+#     activityId = Column(Integer)
+#     activityName = Column(String)
+#     activityType = Column(String)
+#     activityStartDateTimeInGMT = Column(DateTime)
+#     actStartDateTimeInGMTFormatted = Column(String)
+#     activityStartDateTimeLocal = Column(DateTime)
+#     activityStartDateTimeLocalFormatted = Column(String)
+#     value = Column(Float)
+#     prStartTimeGmt = Column(Integer)
+#     prStartTimeGmtFormatted = Column(String)
+#     prStartTimeLocal = Column(Integer)
+#     prStartTimeLocalFormatted = Column(String)
+#     prTypeLabelKey = Column(String)
+#     poolLengthUnit = Column(String)
 
 
 # Construct the database URL for Azure SQL
