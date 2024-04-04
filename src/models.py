@@ -25,15 +25,30 @@ Base = declarative_base()
 #     floors_ascended = Column(Integer)
 #     floors_descended = Column(Integer)
 
-class HRate_tbl(Base):
-    __tablename__ = 'etl_hrate'
+class Hrate_day_tbl(Base):
+    __tablename__ = 'etl_hrate_day'
     __table_args__ = {'schema': f"{db_schema}"}
-    start_timestamp_gmt = Column(DateTime, primary_key=True)
-    end_timestamp_gmt = Column(DateTime)
-    max_heart_rate = Column(Integer)
-    min_heart_rate = Column(Integer)
-    resting_heart_rate = Column(Integer)
-    heart_rate_values = Column(JSON)  # Storing JSON directly, consider normalization
+    userProfilePK = Column(Integer, primary_key=True)
+    calendarDate = Column(DateTime)
+    startTimestampGMT = Column(DateTime)
+    endTimestampGMT = Column(DateTime)
+    startTimestampLocal = Column(DateTime)
+    endTimestampLocal = Column(DateTime)
+    maxHeartRate = Column(Integer)
+    minHeartRate = Column(Integer)
+    restingHeartRate = Column(Integer)
+    lastSevenDaysAvgRestingHeartRate = Column(Integer)
+
+
+
+
+
+
+class Hrate_min_tbl(Base):
+    __tablename__ = 'etl_hrate_min'
+    __table_args__ = {'schema': f"{db_schema}"}
+    timestamp = Column(DateTime, primary_key=True)
+    heartrate = Column(Integer)
     
 # class MaxMetrics_tbl(Base):
 #     __tablename__ = 'etl_maxmetrics'
@@ -77,15 +92,15 @@ class HRate_tbl(Base):
 #     lowest_spo2 = Column(Integer)
 #     spo2_hourly_averages = Column(JSON)  # Storing JSON directly, consider normalization
 
-class Step_tbl(Base):
+class Steps_tbl(Base):
     __tablename__ = 'etl_steps'
     __table_args__ = {'schema': f"{db_schema}"}
-    start_gmt = Column(DateTime, primary_key=True)
-    end_gmt = Column(DateTime)
+    startGMT = Column(DateTime, primary_key=True)
+    endGMT = Column(DateTime)
     steps = Column(Integer)
     pushes = Column(Integer)
     primaryActivityLevel = Column(String)
-    activity_level = Column(Boolean)
+    activityLevelConstant = Column(Boolean)
 
 # class Stress_tbl(Base):
 #     __tablename__ = 'etl_stress'
@@ -126,7 +141,7 @@ DATABASE_URL = f"mssql+pyodbc://{db_username}:{db_password}@{db_host}:1433/{db_n
 # Postgres
 # DATABASE_URL = f"postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=True, fast_executemany=True)
 Session = sessionmaker(bind=engine)
 
 def create_all_tables():
@@ -134,4 +149,6 @@ def create_all_tables():
 
 if __name__ == "__main__":
     create_all_tables()
-    
+
+
+# Read up about the fast_exceutemany... on what is it trying to CAST?

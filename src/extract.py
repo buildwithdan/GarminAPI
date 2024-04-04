@@ -5,6 +5,8 @@ from garminconnect import (
   GarminConnectConnectionError,
   GarminConnectTooManyRequestsError
 )
+import pandas as pd
+import time 
 
 import logging
 from datetime import datetime, timedelta
@@ -13,6 +15,7 @@ from getpass import getpass
 from garth.exc import GarthHTTPError
 
 from models import *
+from config import db_schema
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,7 +56,7 @@ if not api:
 
 
 # testing API calls
-start_date = (datetime.today() - timedelta(days=2)).date()
+start_date = (datetime.today() - timedelta(days=500)).date()
 end_date = datetime.today().date()
 
 info = api.get_full_name()
@@ -66,18 +69,18 @@ info = api.get_full_name()
 info3 = api.get_sleep_data(start_date)
 
 
-# Inserting into DB
+# Inserting into DB via SQLalchemy
 def insert_steps(data):  # Keep the function name as is
     session = Session()
     try:
         for entry in data:
-            row = Step_tbl(  # Assuming StepsData is your model
-                start_gmt=datetime.strptime(entry["startGMT"], "%Y-%m-%dT%H:%M:%S.%f"),
-                end_gmt=datetime.strptime(entry["endGMT"], "%Y-%m-%dT%H:%M:%S.%f"),
+            row = Steps_tbl(  # Assuming StepsData is your model
+                startGMT=datetime.strptime(entry["startGMT"], "%Y-%m-%dT%H:%M:%S.%f"),
+                endGMT=datetime.strptime(entry["endGMT"], "%Y-%m-%dT%H:%M:%S.%f"),
                 steps=entry["steps"],
                 pushes=entry["pushes"],
                 primaryActivityLevel=entry["primaryActivityLevel"],
-                activity_level=entry["activityLevelConstant"]
+                activityLevelConstant=entry["activityLevelConstant"]
             )
             session.add(row)
         
@@ -90,22 +93,94 @@ def insert_steps(data):  # Keep the function name as is
         session.close()
         print("Session closed")
         
+              
+def insert_df_steps(data):
+    try:
+        # Convert the list of dictionaries into a DataFrame
+        df = pd.DataFrame(data)
+        # print(df)
+        
+        # Insert the DataFrame into SQL database, assuming 'step_tbl' is your table name
+        df.to_sql('etl_steps', con=engine, schema=f"{db_schema}" ,if_exists='append', index=False)
+        # print("Step data successfully inserted into the database.")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Operation completed.")
+
+def insert_df_hrate_pm(data):
+    try:
+        # Convert the list of dictionaries into a DataFrame
+        df = pd.DataFrame(data)
+
+        df.rename(columns={0: 'timestamp', 1: 'heartrate'}, inplace=True)
+
+        # Convert timestamp from Unix time in milliseconds to datetime
+        # Adjust the unit to 's' if your timestamp is in seconds
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        # # Insert the DataFrame into SQL database, assuming 'step_tbl' is your table name
+        
+        
+        df.to_sql('etl_hrate_min', con=engine, schema=f"{db_schema}" ,if_exists='append', index=False)
+        # # print("Step data successfully inserted into the database.")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Operation completed.")    
+
+
+def insert_df_hrate_pd(data):
+    try:
+        clean_data = data.copy()
+        
+        # Remove the keys for 'heartRateValueDescriptors' and 'heartRateValues'
+        # if they exist in the data dictionary
+        clean_data.pop('heartRateValueDescriptors', None)  # The second argument prevents KeyError if the key is not found
+        clean_data.pop('heartRateValues', None)
+        
+        # Now, clean_data contains only the information you want to keep
+        
+        # Convert the cleaned dictionary to a DataFrame
+        # Since clean_data is a single dictionary (i.e., a single record), 
+        # we wrap it in a list to create a one-row DataFrame
+        df = pd.DataFrame([clean_data])
+        
+        print(df)
+        
+        # Insert the DataFrame into the SQL database
+        df.to_sql('etl_hrate_day', con=engine, schema=db_schema, if_exists='append', index=False)
+        
+        print("Data successfully inserted into the database.")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Operation completed.") 
+        
+        
         
 
-
 if __name__ == "__main__":
+  start_time = time.time()
   
   current_date = start_date
   
-  while current_date <= end_date: 
+  while current_date <= end_date:
     
     steps_data = api.get_steps_data(current_date)
-    insert_steps(steps_data)
+    # print(steps_data)
+    insert_df_steps(steps_data)
+    
+    # heart_rate = api.get_heart_rates(current_date)
+    # insert_df_hrate_pm(heart_rate["heartRateValues"])
+    # insert_df_hrate_pd(heart_rate)
+
+    
     
     # stress_data = api.get_stress_data(current_date) = shit
     # insert_stress(stress_data)
-    
-    # heart_rate = api.get_heart_rates(current_date)
     
     # body_battery = api.get_body_battery(current_date)
     
@@ -125,3 +200,7 @@ if __name__ == "__main__":
     current_date += timedelta(days=1)
     print(current_date)
     print(f"Completed: {current_date}") 
+    
+  end_time = time.time()
+  time_taken = end_time - start_time
+  print(f"Completed Sync: {time_taken} seconds")
