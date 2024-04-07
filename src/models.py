@@ -141,14 +141,37 @@ DATABASE_URL = f"mssql+pyodbc://{db_username}:{db_password}@{db_host}:1433/{db_n
 # Postgres
 # DATABASE_URL = f"postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-engine = create_engine(DATABASE_URL, echo=True, fast_executemany=True)
+engine = create_engine(DATABASE_URL, echo=True)
+
+# engine = create_engine('mssql+pyodbc://r00t:password@dnell.database.windows.net/PrivateDB?driver=ODBC+Driver+17+for+SQL+Server;Connect Timeout=30')
+
+
+# connection_string = (
+#     "mssql+pyodbc://r00t:V^KKFLFd$C8pfevt#VqF^GdQbaPsn7FCYRd@"
+#     "dnell.database.windows.net/PrivateDB?"
+#     "driver=ODBC Driver 17 for SQL Server;Connect Timeout=30"
+# )
+
+# engine = create_engine(connection_string)
+
+
+
 Session = sessionmaker(bind=engine)
 
-def create_all_tables():
+# def create_schema(schema_name):
+#     with engine.connect() as connection:
+#         # Check if the schema exists and create it if it does not
+#         connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
+
+def setup_db():
+    # Make sure to call create_schema before creating tables
+    # create_schema(db_schema)  # db_schema should be defined in your config or as a variable
     Base.metadata.create_all(engine)
 
 if __name__ == "__main__":
-    create_all_tables()
+    setup_db()
+
+
 
 
 # Read up about the fast_exceutemany... on what is it trying to CAST?

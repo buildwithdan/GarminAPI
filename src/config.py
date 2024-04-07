@@ -14,5 +14,5 @@ db_username = os.getenv('DB_USERNAME')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
 db_schema = os.getenv('DB_SCHEMA')
-db_port = os.getenv('DB_PORT')
+db_port = str(os.getenv('DB_PORT'))
 
