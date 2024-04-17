@@ -53,22 +53,6 @@ if not api:
   api = init_api(email, password)
 
 
-
-
-# testing API calls
-start_date = (datetime.today() - timedelta(days=500)).date()
-end_date = datetime.today().date()
-
-info = api.get_full_name()
-# info2 = api.get_blood_pressure(start_date)
-# info2 = api.get_daily_weigh_ins(start_date)
-# info2 = api.get_weigh_ins(start_date, end_date)
-# info3 = api.get_user_profile()
-# info3 = api.get_stress_data(start_date)
-# info3 = api.get_heart_rates(start_date)
-info3 = api.get_sleep_data(start_date)
-
-
 # Inserting into DB via SQLalchemy
 def insert_steps(data):  # Keep the function name as is
     session = Session()
@@ -93,14 +77,18 @@ def insert_steps(data):  # Keep the function name as is
         session.close()
         print("Session closed")
         
-              
+# Inserting into DB via Pandas - working             
 def insert_df_steps(data):
     try:
         # Convert the list of dictionaries into a DataFrame
         df = pd.DataFrame(data)
-        # print(df)
         
-        # Insert the DataFrame into SQL database, assuming 'step_tbl' is your table name
+        df['activityLevelConstant'] = df['activityLevelConstant'].astype(int)
+        df['startGMT'] = pd.to_datetime(df['startGMT'])
+        df['endGMT'] = pd.to_datetime(df['endGMT'])
+        # print(df)
+
+
         df.to_sql('etl_steps', con=engine, schema=f"{db_schema}" ,if_exists='append', index=False)
         # print("Step data successfully inserted into the database.")
         
@@ -109,16 +97,19 @@ def insert_df_steps(data):
     finally:
         print("Operation completed.")
 
-def insert_df_hrate_pm(data):
+def insert_df_hrate_per_min(data):
     try:
         # Convert the list of dictionaries into a DataFrame
         df = pd.DataFrame(data)
-
         df.rename(columns={0: 'timestamp', 1: 'heartrate'}, inplace=True)
 
         # Convert timestamp from Unix time in milliseconds to datetime
         # Adjust the unit to 's' if your timestamp is in seconds
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True).dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        # print(df)
+
+
         # # Insert the DataFrame into SQL database, assuming 'step_tbl' is your table name
         
         
@@ -130,24 +121,14 @@ def insert_df_hrate_pm(data):
     finally:
         print("Operation completed.")    
 
-
-def insert_df_hrate_pd(data):
-    try:
-        clean_data = data.copy()
+def insert_df_hrate_per_day(data):
+    try: 
+        data.pop('heartRateValueDescriptors', None)
+        data.pop('heartRateValues', None)
         
-        # Remove the keys for 'heartRateValueDescriptors' and 'heartRateValues'
-        # if they exist in the data dictionary
-        clean_data.pop('heartRateValueDescriptors', None)  # The second argument prevents KeyError if the key is not found
-        clean_data.pop('heartRateValues', None)
+        df = pd.DataFrame([data])
         
-        # Now, clean_data contains only the information you want to keep
-        
-        # Convert the cleaned dictionary to a DataFrame
-        # Since clean_data is a single dictionary (i.e., a single record), 
-        # we wrap it in a list to create a one-row DataFrame
-        df = pd.DataFrame([clean_data])
-        
-        print(df)
+        # print(df)
         
         # Insert the DataFrame into the SQL database
         df.to_sql('etl_hrate_day', con=engine, schema=db_schema, if_exists='append', index=False)
@@ -158,29 +139,83 @@ def insert_df_hrate_pd(data):
         print(f"An error occurred: {e}")
     finally:
         print("Operation completed.") 
+                
+def insert_df_stress_per_min(data):
+    try:
+        # Convert the list of dictionaries into a DataFrame
+        df = pd.DataFrame(data)
+        df.rename(columns={0: 'timestamp', 1: 'stressLevel'}, inplace=True)
+
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True).dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        print(df)
         
+        df.to_sql('etl_stress_min', con=engine, schema=f"{db_schema}" ,if_exists='append', index=False)
+        # # print("Step data successfully inserted into the database.")
         
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Operation completed.")    
+
+def insert_df_stress_per_day(data):
+    try: 
+        data.pop('stressChartValueOffset', None)
+        data.pop('stressChartYAxisOrigin', None)
+        data.pop('stressValueDescriptorsDTOList', None)
+        data.pop('stressValuesArray', None)
+        data.pop('bodyBatteryValueDescriptorsDTOList', None)
+        data.pop('bodyBatteryValuesArray', None)
         
+        df = pd.DataFrame([data])
+        
+        print(df)
+        
+        # Insert the DataFrame into the SQL database
+        df.to_sql('etl_stress_day', con=engine, schema=db_schema, if_exists='append', index=False)
+        
+        print("Data successfully inserted into the database.")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("Operation completed.") 
+
 
 if __name__ == "__main__":
-  start_time = time.time()
-  
+  # Day Loops
+  start_date = (datetime.today() - timedelta(days=30)).date()
+  end_date = datetime.today().date()
   current_date = start_date
   
+  # Timer starts now
+  start_time = time.time()
+  
+
+  # Testing API endpoints:::
+  # info = api.get_full_name()
+  # info2 = api.get_blood_pressure(start_date)
+  # info2 = api.get_daily_weigh_ins(start_date)
+  # info2 = api.get_weigh_ins(start_date, end_date)
+  # info3 = api.get_user_profile()
+  # info3 = api.get_stress_data(start_date)
+  # info3 = api.get_heart_rates(start_date)
+  # info3 = api.get_sleep_data(start_date)
+
+  # Loop starts
   while current_date <= end_date:
     
     steps_data = api.get_steps_data(current_date)
-    # print(steps_data)
     insert_df_steps(steps_data)
     
-    # heart_rate = api.get_heart_rates(current_date)
-    # insert_df_hrate_pm(heart_rate["heartRateValues"])
-    # insert_df_hrate_pd(heart_rate)
+    hrate_data = api.get_heart_rates(current_date)
+    insert_df_hrate_per_min(hrate_data["heartRateValues"])
+    insert_df_hrate_per_day(hrate_data)
 
-    
-    
-    # stress_data = api.get_stress_data(current_date) = shit
-    # insert_stress(stress_data)
+    stress_data = api.get_stress_data(current_date)
+    insert_df_stress_per_min(stress_data["stressValuesArray"])
+    insert_df_stress_per_day(stress_data)
+   
     
     # body_battery = api.get_body_battery(current_date)
     

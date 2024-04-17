@@ -1,9 +1,13 @@
-# SQLAlchemy database models
-
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Date, JSON, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Engine, engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-# Import your configuration settings
-from config import db_host, db_username, db_password, db_name, db_port, db_schema
+from config import db_host, db_username, db_password, db_name, db_schema, db_port
+import pyodbc
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 Base = declarative_base()
 
@@ -28,8 +32,8 @@ Base = declarative_base()
 class Hrate_day_tbl(Base):
     __tablename__ = 'etl_hrate_day'
     __table_args__ = {'schema': f"{db_schema}"}
-    userProfilePK = Column(Integer, primary_key=True)
-    calendarDate = Column(DateTime)
+    userProfilePK = Column(Integer)
+    calendarDate = Column(DateTime, primary_key=True)
     startTimestampGMT = Column(DateTime)
     endTimestampGMT = Column(DateTime)
     startTimestampLocal = Column(DateTime)
@@ -40,16 +44,38 @@ class Hrate_day_tbl(Base):
     lastSevenDaysAvgRestingHeartRate = Column(Integer)
 
 
-
-
-
-
 class Hrate_min_tbl(Base):
     __tablename__ = 'etl_hrate_min'
     __table_args__ = {'schema': f"{db_schema}"}
     timestamp = Column(DateTime, primary_key=True)
     heartrate = Column(Integer)
     
+
+class Stress_day_tbl(Base):
+    __tablename__ = 'etl_stress_day'
+    __table_args__ = {'schema': f"{db_schema}"}
+    userProfilePK = Column(Integer)
+    calendarDate = Column(DateTime, primary_key=True)
+    startTimestampGMT = Column(DateTime)
+    endTimestampGMT = Column(DateTime)
+    startTimestampLocal = Column(DateTime)
+    endTimestampLocal = Column(DateTime)
+    maxStressLevel = Column(Integer)
+    avgStressLevel = Column(Integer)
+
+
+class Stress_min_tbl(Base):
+    __tablename__ = 'etl_stress_min'
+    __table_args__ = {'schema': f"{db_schema}"}
+    timestamp = Column(DateTime, primary_key=True)
+    stressLevel = Column(Integer)
+
+
+
+
+
+
+
 # class MaxMetrics_tbl(Base):
 #     __tablename__ = 'etl_maxmetrics'
 #     __table_args__ = {'schema': f"{db_schema}"}
@@ -100,18 +126,7 @@ class Steps_tbl(Base):
     steps = Column(Integer)
     pushes = Column(Integer)
     primaryActivityLevel = Column(String)
-    activityLevelConstant = Column(Boolean)
-
-# class Stress_tbl(Base):
-#     __tablename__ = 'etl_stress'
-#     __table_args__ = {'schema': f"{db_schema}"}
-#     user_profile_pk = Column(Integer)
-#     calendar_date = Column(Date)
-#     start_timestamp_gmt = Column(DateTime, primary_key=True)
-#     end_timestamp_gmt = Column(DateTime)
-#     max_stress_level = Column(Integer)
-#     avg_stress_level = Column(Integer)
-#     stress_values = Column(JSON)  # Storing the array directly; consider normalization
+    activityLevelConstant = Column(Integer)
 
 
 # class personal_records_tbl(Base):
@@ -134,44 +149,34 @@ class Steps_tbl(Base):
 #     poolLengthUnit = Column(String)
 
 
-# Construct the database URL for Azure SQL
-# MS Azure SQL
-DATABASE_URL = f"mssql+pyodbc://{db_username}:{db_password}@{db_host}:1433/{db_name}?driver=ODBC+Driver+17+for+SQL+Server"
+def get_engine_db(bulk: bool=True) -> Engine:
+    con_str = engine.URL.create(
+        "mssql+pyodbc",
+        username=db_username,
+        password=db_password,
+        host=db_host,
+        database=db_name,
+        port=db_port,
+        query={
+            "driver": 'ODBC Driver 17 for SQL Server',
+            "LongAsMax": "Yes",
+        }
+    )
+    return create_engine(con_str, fast_executemany=bulk, echo=True)
 
-# Postgres
-# DATABASE_URL = f"postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
-
-engine = create_engine(DATABASE_URL, echo=True)
-
-# engine = create_engine('mssql+pyodbc://r00t:password@dnell.database.windows.net/PrivateDB?driver=ODBC+Driver+17+for+SQL+Server;Connect Timeout=30')
-
-
-# connection_string = (
-#     "mssql+pyodbc://r00t:V^KKFLFd$C8pfevt#VqF^GdQbaPsn7FCYRd@"
-#     "dnell.database.windows.net/PrivateDB?"
-#     "driver=ODBC Driver 17 for SQL Server;Connect Timeout=30"
-# )
-
-# engine = create_engine(connection_string)
-
-
+engine = get_engine_db()
 
 Session = sessionmaker(bind=engine)
 
-# def create_schema(schema_name):
-#     with engine.connect() as connection:
-#         # Check if the schema exists and create it if it does not
-#         connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-
 def setup_db():
-    # Make sure to call create_schema before creating tables
-    # create_schema(db_schema)  # db_schema should be defined in your config or as a variable
-    Base.metadata.create_all(engine)
+    try:
+        Base.metadata.create_all(engine)
+        logger.info("Database setup completed successfully.")
+    except Exception as e:
+        logger.error("Database setup failed:", exc_info=True)
+
+
 
 if __name__ == "__main__":
+    logger.info("Starting database setup.")
     setup_db()
-
-
-
-
-# Read up about the fast_exceutemany... on what is it trying to CAST?
