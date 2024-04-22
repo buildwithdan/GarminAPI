@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Engine, engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from config import db_host, db_username, db_password, db_name, db_schema, db_port
+from sqlalchemy import URL
 import pyodbc
 import logging
 
